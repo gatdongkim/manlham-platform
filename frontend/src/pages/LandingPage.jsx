@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import SocialFeed from "../components/SocialFeed"; // Added this import
 import { 
   CheckCircle2, 
   Zap, 
@@ -136,6 +137,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* SOCIAL FEED - Added here */}
+      <SocialFeed />
+
       {/* CALL TO ACTION */}
       <section className="py-24 text-center">
         <div className="max-w-3xl mx-auto px-6 space-y-8">
@@ -157,7 +161,7 @@ export default function LandingPage() {
   );
 }
 
-// Sub-components for cleaner structure
+// Sub-components (No changes made here)
 function FeatureCard({ icon, title, desc }) {
   return (
     <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
