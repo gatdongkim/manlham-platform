@@ -71,7 +71,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 7. Mount Routes
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/jobs', jobRoutes);
+app.use('/api/v1/jobs', customJobRoutes);
 app.use('/api/v1/job-details', customJobRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/applications', applicationRoutes);
