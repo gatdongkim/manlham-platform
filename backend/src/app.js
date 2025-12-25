@@ -67,13 +67,17 @@ app.use("/api", limiter);
 // 5. Unified Route Mounting
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Mount all v1 routes clearly
+// Mount specialized admin and job routes
+// We use "/" as the mount point if the router files (customJobRoutes/customAdminRoutes) 
+// already include the full path structure like "/api/v1/jobs"
+app.use(customJobRoutes); 
+app.use(customAdminRoutes);
+
+// Other v1 routes
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/jobs', customJobRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/applications', applicationRoutes);
-app.use('/api/v1/admin', adminPanelRoutes);
-app.use('/api/v1/admin-actions', customAdminRoutes);
+app.use('/api/v1/admin-panel', adminPanelRoutes); // Renamed to avoid collision
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/chat', chatRoutes);
