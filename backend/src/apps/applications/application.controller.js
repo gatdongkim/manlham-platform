@@ -3,9 +3,6 @@ import * as mpesaService from '../payments/mpesa.service.js';
 import Job from '../jobs/job.model.js'; 
 import axios from 'axios';
 
-/**
- * @desc Professional applies for a job
- */
 export const applyToJob = async (req, res) => {
     try {
         const application = await applicationService.createApplication(req.user.id, req.body);
@@ -15,13 +12,8 @@ export const applyToJob = async (req, res) => {
     }
 };
 
-/**
- * @desc Professional views their own applications (For "My Bids" page)
- * ✅ Added this function to handle GET /api/v1/applications
- */
 export const getStudentApplications = async (req, res) => {
     try {
-        // req.user.id is extracted from the JWT token by your authMiddleware
         const applications = await applicationService.getApplicationsByProfessional(req.user.id);
         res.status(200).json({ success: true, data: applications });
     } catch (error) {
@@ -29,9 +21,6 @@ export const getStudentApplications = async (req, res) => {
     }
 };
 
-/**
- * @desc MSME views applications for their job
- */
 export const getJobApplications = async (req, res) => {
     try {
         const applications = await applicationService.getApplicationsByJob(req.params.jobId);
@@ -42,8 +31,21 @@ export const getJobApplications = async (req, res) => {
 };
 
 /**
- * @desc Hire Professional (Accept Application)
+ * @desc Professional withdraws their bid
+ * ✅ Added this function
  */
+export const withdrawApplication = async (req, res) => {
+    try {
+        await applicationService.withdrawApplication(req.params.id, req.user.id);
+        res.status(200).json({ 
+            success: true, 
+            message: "Proposal withdrawn successfully." 
+        });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+};
+
 export const updateApplicationStatus = async (req, res) => {
     try {
         const { id } = req.params; 

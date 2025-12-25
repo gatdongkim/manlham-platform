@@ -24,11 +24,10 @@ export const createApplication = async (userId, data) => {
 
 /**
  * @desc Get all applications submitted by a specific professional
- * ✅ Added this for the "My Bids" functionality
  */
 export const getApplicationsByProfessional = async (professionalId) => {
     return await Application.find({ professional: professionalId })
-        .populate('job', 'title budget status') // Retrieves job details from Job collection
+        .populate('job', 'title budget status')
         .sort({ createdAt: -1 });
 };
 
@@ -70,5 +69,21 @@ export const updateApplicationStatus = async (id, status) => {
         await Job.findByIdAndUpdate(application.job, { status: 'CLOSED' });
     }
 
+    return application;
+};
+
+/**
+ * @desc Withdraw/Delete an application
+ * ✅ Added this function
+ */
+export const withdrawApplication = async (id, userId) => {
+    const application = await Application.findOneAndDelete({ 
+        _id: id, 
+        professional: userId 
+    });
+
+    if (!application) {
+        throw new Error("Application not found or unauthorized to withdraw.");
+    }
     return application;
 };
