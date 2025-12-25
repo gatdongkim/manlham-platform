@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/http'; // Use your configured axios instance
-import { FileText, Clock, ChevronRight, Briefcase } from 'lucide-react';
+import api from '../../api/http'; 
+import { Clock, ChevronRight, Briefcase } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Card from '../../components/Card';
 
 export default function Applications() {
-  // ✅ Initialization: Start with an empty array
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        // Fetching from the summary endpoint
-        const { data } = await api.get('/students/dashboard-summary');
+        // ✅ CHANGED: Hit the specific applications endpoint
+        // This ensures you get the full list of your bids from the database
+        const { data } = await api.get('/applications');
         
-        // ✅ Safety Check: If data.applications is missing, fallback to empty array
-        setApplications(data?.applications || []);
+        // ✅ UPDATED: API usually returns { success: true, data: [...] }
+        setApplications(data?.data || []);
       } catch (err) {
         console.error("Error loading applications:", err);
-        setApplications([]); // Ensure state isn't undefined on error
+        setApplications([]);
       } finally {
         setLoading(false);
       }
@@ -31,6 +31,7 @@ export default function Applications() {
     switch (status) {
       case 'ACCEPTED': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
       case 'REJECTED': return 'bg-red-50 text-red-600 border-red-100';
+      case 'WITHDRAWN': return 'bg-gray-50 text-gray-400 border-gray-100';
       default: return 'bg-amber-50 text-amber-600 border-amber-100';
     }
   };
@@ -46,7 +47,6 @@ export default function Applications() {
   }
 
   return (
-    /* ✅ Layout wrapper removed to fix duplication */
     <div className="max-w-7xl mx-auto space-y-8 p-4">
       <header>
         <h1 className="text-3xl font-black text-gray-900 italic tracking-tight">
@@ -70,7 +70,6 @@ export default function Applications() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {/* ✅ Optional Chaining ensures this won't crash */}
               {applications?.length > 0 ? (
                 applications.map((app) => (
                   <tr key={app._id} className="hover:bg-gray-50/50 transition-colors group">
@@ -80,8 +79,11 @@ export default function Applications() {
                           <Briefcase size={18} />
                         </div>
                         <div>
+                          {/* ✅ Backend populate('job') provides the title */}
                           <p className="font-bold text-gray-900">{app.job?.title || 'Untitled Project'}</p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">Manlham Verified</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase italic">
+                            ID: {app._id.slice(-6)}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -102,13 +104,15 @@ export default function Applications() {
                     <td className="px-8 py-6 text-right">
                       {app.status === 'ACCEPTED' ? (
                         <Link 
-                          to={`/workspace/${app.job?._id}`}
+                          to={`/workspace/${app.job?._id || app.job}`}
                           className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-600 transition inline-flex items-center gap-2"
                         >
-                          Enter <ChevronRight size={14} />
+                          Enter Workspace <ChevronRight size={14} />
                         </Link>
                       ) : (
-                        <span className="text-[10px] font-black text-gray-300 uppercase">Pending Review</span>
+                        <span className="text-[10px] font-black text-gray-300 uppercase">
+                          {app.status === 'REJECTED' ? 'Closed' : 'Under Review'}
+                        </span>
                       )}
                     </td>
                   </tr>

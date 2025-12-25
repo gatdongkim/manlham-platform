@@ -5,7 +5,6 @@ import Job from '../jobs/job.model.js';
  * @desc Create a new job application
  */
 export const createApplication = async (userId, data) => {
-    // Check if the professional has already applied to this job
     const existingApplication = await Application.findOne({ 
         job: data.job, 
         professional: userId 
@@ -17,14 +16,24 @@ export const createApplication = async (userId, data) => {
 
     const application = await Application.create({
         ...data,
-        professional: userId // Mapping the logged-in user to the 'professional' field
+        professional: userId 
     });
 
     return application;
 };
 
 /**
- * @desc Get all applications for a specific job
+ * @desc Get all applications submitted by a specific professional
+ * ✅ Added this for the "My Bids" functionality
+ */
+export const getApplicationsByProfessional = async (professionalId) => {
+    return await Application.find({ professional: professionalId })
+        .populate('job', 'title budget status') // Retrieves job details from Job collection
+        .sort({ createdAt: -1 });
+};
+
+/**
+ * @desc Get all applications for a specific job (For MSMEs)
  */
 export const getApplicationsByJob = async (jobId) => {
     return await Application.find({ job: jobId })
@@ -57,7 +66,6 @@ export const updateApplicationStatus = async (id, status) => {
         throw new Error("Application not found.");
     }
 
-    // If accepted, we update the Job status to 'BUSY' or 'CLOSED'
     if (status === 'ACCEPTED') {
         await Job.findByIdAndUpdate(application.job, { status: 'CLOSED' });
     }

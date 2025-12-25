@@ -5,7 +5,6 @@ import axios from 'axios';
 
 /**
  * @desc Professional applies for a job
- * ✅ Renamed from createApplication to applyToJob
  */
 export const applyToJob = async (req, res) => {
     try {
@@ -17,8 +16,21 @@ export const applyToJob = async (req, res) => {
 };
 
 /**
+ * @desc Professional views their own applications (For "My Bids" page)
+ * ✅ Added this function to handle GET /api/v1/applications
+ */
+export const getStudentApplications = async (req, res) => {
+    try {
+        // req.user.id is extracted from the JWT token by your authMiddleware
+        const applications = await applicationService.getApplicationsByProfessional(req.user.id);
+        res.status(200).json({ success: true, data: applications });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
  * @desc MSME views applications for their job
- * ✅ Renamed from getApplicationsByJob to getJobApplications
  */
 export const getJobApplications = async (req, res) => {
     try {
