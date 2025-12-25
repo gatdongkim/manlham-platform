@@ -6,29 +6,39 @@ import rateLimit from "express-rate-limit";
 import xss from "xss-clean";
 import mongoSanitize from "express-mongo-sanitize";
 import swaggerUi from "swagger-ui-express";
+import path from "path";
+import { fileURLToPath } from 'url';
 
+// Route Imports (Matching your server.js structure)
 import routes from "./routes/index.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { swaggerSpec } from "./swagger.js";
+import authRoutes from './apps/auth/auth.routes.js';
+import paymentRoutes from './apps/payments/payment.routes.js';
+import applicationRoutes from './apps/applications/application.routes.js';
+import adminPanelRoutes from './apps/admin_panel/admin.routes.js';
+import userRoutes from './apps/users/user.routes.js';
+import studentRoutes from './apps/students/student.routes.js';
+import chatRoutes from './apps/chat/chat.routes.js';
 
-// Import custom routes using ES Modules to replace the invalid 'require' calls
+// Custom Routes
 import customJobRoutes from './routes/jobRoutes.js';
 import customAdminRoutes from './routes/adminRoutes.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express(); 
 
 // 1. Security Middlewares
-// Set crossOriginResourcePolicy to false so images can load on the frontend
 app.use(helmet({
   crossOriginResourcePolicy: false,
   contentSecurityPolicy: false
 }));
-
 app.use(xss());
 app.use(mongoSanitize());
 
-// 2. Production CORS Configuration
-// Must match allowedOrigins in server.js and allow credentials for JWT cookies
+// 2. Production CORS Fix - Crucial for "API: BLOCKED" error
 app.use(cors({
     origin: [
         "https://manlham-tech.vercel.app", 
@@ -41,9 +51,12 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(morgan("dev"));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// 3. Rate Limiting
+// 3. Static Files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// 4. Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -51,21 +64,28 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
-// 4. Routes Mounting
+// 5. Unified Route Mounting
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Mount specialized admin and job routes to match your server.js logic
+// Mount all v1 routes clearly
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/jobs', customJobRoutes);
-app.use('/api/v1/admin', customAdminRoutes);
+app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/applications', applicationRoutes);
+app.use('/api/v1/admin', adminPanelRoutes);
+app.use('/api/v1/admin-actions', customAdminRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/students', studentRoutes);
+app.use('/api/v1/chat', chatRoutes);
 
-// General API router
+// General catch-all router
 app.use("/api", routes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Malham Tech Support API is running 🚀" });
 });
 
-// 5. Error Handling (MUST be last)
+// 6. Error Handling
 app.use(errorHandler);
 
 export default app;
