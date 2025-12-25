@@ -1,5 +1,5 @@
 import express from 'express';
-import { authMiddleware } from '../../middlewares/auth.middleware.js';
+import { authMiddleware, adminMiddleware } from '../../middlewares/auth.middleware.js';
 import { 
     users, 
     getStats, 
@@ -8,24 +8,29 @@ import {
     getAllDisputes,
     resolveDispute,
     getAuditLogs
-} from './admin.controller.js'; // Added .js extension
+} from './admin.controller.js';
 
 const router = express.Router();
 
 /**
  * ✅ ACCESS CONTROL
- * Protect all admin routes. Only users with 'ADMIN' role in their JWT can pass.
+ * Using both authMiddleware and adminMiddleware ensures double-layer security.
  */
-router.use(authMiddleware(['ADMIN']));
+router.use(authMiddleware());
+router.use(adminMiddleware); 
 
-// User Management
+// User Management (Identity Page)
+// URL: /api/v1/admin/users
 router.get('/users', users);
 
-// Platform Overview
+// Platform Overview (Control Panel Stats)
+// URL: /api/v1/admin/stats
 router.get('/stats', getStats);
+
+// Audit & Logs
 router.get('/audit-logs', getAuditLogs);
 
-// Professional Vetting (For South Sudan & Kenya regional verification)
+// Professional Vetting
 router.get('/verification-queue', getVerificationQueue);
 router.patch('/vet-professional/:id', vetProfessional);
 
@@ -33,5 +38,4 @@ router.patch('/vet-professional/:id', vetProfessional);
 router.get('/disputes', getAllDisputes);
 router.post('/disputes/:jobId/resolve', resolveDispute);
 
-// ✅ FIX: Use 'export default' for ESM compatibility
 export default router;

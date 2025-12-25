@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const auditLogSchema = new mongoose.Schema({
     admin: { 
@@ -37,4 +37,6 @@ const auditLogSchema = new mongoose.Schema({
 // Index for fast searching by admin or action date
 auditLogSchema.index({ admin: 1, createdAt: -1 });
 
-module.exports = mongoose.model('AuditLog', auditLogSchema);
+const AuditLog = mongoose.model('AuditLog', auditLogSchema);
+
+export default AuditLog;

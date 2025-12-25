@@ -9,7 +9,7 @@ import swaggerUi from "swagger-ui-express";
 import path from "path";
 import { fileURLToPath } from 'url';
 
-// Route Imports (Matching your server.js structure)
+// Route Imports
 import routes from "./routes/index.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { swaggerSpec } from "./swagger.js";
@@ -21,7 +21,7 @@ import userRoutes from './apps/users/user.routes.js';
 import studentRoutes from './apps/students/student.routes.js';
 import chatRoutes from './apps/chat/chat.routes.js';
 
-// Custom Routes
+// Custom/Override Routes
 import customJobRoutes from './routes/jobRoutes.js';
 import customAdminRoutes from './routes/adminRoutes.js';
 
@@ -38,7 +38,7 @@ app.use(helmet({
 app.use(xss());
 app.use(mongoSanitize());
 
-// 2. Production CORS Fix - Crucial for "API: BLOCKED" error
+// 2. Production CORS Fix
 app.use(cors({
     origin: [
         "https://manlham-tech.vercel.app", 
@@ -56,10 +56,10 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 // 3. Static Files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 4. Rate Limiting
+// 4. Rate Limiting (Increased slightly for Admin tasks)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 200, 
   message: "Too many requests, please try again later",
 });
 app.use("/api", limiter);
@@ -67,29 +67,35 @@ app.use("/api", limiter);
 // 5. Unified Route Mounting
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Mount specialized admin and job routes
-// We use "/" as the mount point if the router files (customJobRoutes/customAdminRoutes) 
-// already include the full path structure like "/api/v1/jobs"
-app.use(customJobRoutes); 
-app.use(customAdminRoutes);
+/**
+ * ✅ ROUTE HIERARCHY FIX
+ * We mount specific custom routers BEFORE the general 'routes' index
+ * to prevent 404 shadowing.
+ */
 
-// Other v1 routes
+// Custom handlers for Admin Stats and Job Lists
+app.use('/api/v1/jobs', customJobRoutes); 
+app.use('/api/v1/admin', customAdminRoutes); 
+
+// Core Identity and User Management
+app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/auth', authRoutes);
+
+// Other Feature Routes
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/applications', applicationRoutes);
-app.use('/api/v1/admin-panel', adminPanelRoutes); // Renamed to avoid collision
-app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/admin-panel', adminPanelRoutes); 
 
-// General catch-all router
+// General catch-all for any routes defined in routes/index.js
 app.use("/api", routes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Malham Tech Support API is running 🚀" });
 });
 
-// 6. Error Handling
+// 6. Error Handling (MUST be last)
 app.use(errorHandler);
 
 export default app;
