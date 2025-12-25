@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-// ❌ Removed DashboardLayout import
+import api from "../../api/http"; // ✅ Ensure this points to your axios instance
 import BackButton from "../../components/BackButton";
 import { 
   Users, 
@@ -10,33 +10,52 @@ import {
   Filter,
   GraduationCap,
   Briefcase,
-  BadgeCheck
+  BadgeCheck,
+  Loader2
 } from "lucide-react";
 
 export default function AdminUsers() {
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, you would fetch this from your API
-    setUsers([
-      { id: 1, name: "James Lado", role: "STUDENT", email: "james@mail.com", verified: true, joined: "Dec 2025" },
-      { id: 2, name: "Mary John", role: "CLIENT", email: "mary@mail.com", verified: true, joined: "Nov 2025" },
-      { id: 3, name: "Admin User", role: "ADMIN", email: "admin@mail.com", verified: true, joined: "Oct 2025" },
-      { id: 4, name: "Kelvin Kibet", role: "STUDENT", email: "kibet@mail.com", verified: false, joined: "Jan 2025" },
-    ]);
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        // ✅ Hits your admin route to get real registrations from MongoDB
+        const { data } = await api.get('/admin/users'); 
+        setUsers(data.data || []);
+      } catch (err) {
+        console.error("Failed to load real-time users:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
   }, []);
 
+  // ✅ Maps DB roles to your UI labels
+  const getDisplayRole = (role) => {
+    if (role === 'PRO') return 'STUDENT';
+    if (role === 'MSME') return 'CLIENT';
+    return role; // Falls back to ADMIN or others
+  };
+
   const filtered = users.filter(u => {
-    const matchesSearch = u.name.toLowerCase().includes(query.toLowerCase()) || 
-                          u.email.toLowerCase().includes(query.toLowerCase());
-    const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
+    const name = u.name || "Anonymous";
+    const email = u.email || "";
+    const matchesSearch = name.toLowerCase().includes(query.toLowerCase()) || 
+                          email.toLowerCase().includes(query.toLowerCase());
+    
+    const uiRole = getDisplayRole(u.role);
+    const matchesRole = roleFilter === "ALL" || uiRole === roleFilter;
+    
     return matchesSearch && matchesRole;
   });
 
   return (
-    // ✅ Use a standard div container to prevent double sidebars
     <div className="max-w-7xl mx-auto pb-20 space-y-6">
       
       {/* Navigation & Header */}
@@ -83,72 +102,79 @@ export default function AdminUsers() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50">
-              <tr>
-                <th className="px-10 py-6">User Identity</th>
-                <th className="px-6 py-6">Role</th>
-                <th className="px-6 py-6">Verification</th>
-                <th className="px-10 py-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.map(user => (
-                <tr key={user.id} className="hover:bg-indigo-50/10 transition group">
-                  <td className="px-10 py-8">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center font-black text-lg italic shadow-lg">
-                        {user.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-black text-gray-900 leading-tight italic">{user.name}</p>
-                        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-tighter mt-0.5">{user.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-8">
-                    <span className={`flex items-center gap-1.5 text-[9px] font-black px-3 py-1.5 rounded-full w-fit uppercase tracking-[0.15em] border ${
-                      user.role === 'STUDENT' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                      user.role === 'CLIENT' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-gray-100 text-gray-600 border-gray-200'
-                    }`}>
-                      {user.role === 'STUDENT' ? <GraduationCap size={12} /> : <Briefcase size={12} />}
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-8">
-                    {user.verified ? (
-                      <div className="flex items-center gap-1.5 text-emerald-600 text-[10px] font-black uppercase tracking-[0.1em]">
-                        <BadgeCheck size={18} /> Verified
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-orange-500 text-[10px] font-black uppercase tracking-[0.1em] opacity-80">
-                        <ShieldCheck size={18} /> Pending Audit
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-10 py-8 text-right">
-                    <div className="flex justify-end gap-2">
-                      <button className="p-3 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Suspend Account">
-                        <UserX size={18} />
-                      </button>
-                      <button className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
-                        <MoreVertical size={18} />
-                      </button>
-                    </div>
-                  </td>
+      <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden min-h-[400px]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center h-64 gap-3">
+             <Loader2 className="animate-spin text-indigo-600" size={32} />
+             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Identity Records...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-50/50 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50">
+                <tr>
+                  <th className="px-10 py-6">User Identity</th>
+                  <th className="px-6 py-6">Role</th>
+                  <th className="px-6 py-6">Verification</th>
+                  <th className="px-10 py-6 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filtered.map(user => (
+                  <tr key={user._id} className="hover:bg-indigo-50/10 transition group">
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center font-black text-lg italic shadow-lg uppercase">
+                          {user.name?.charAt(0) || 'U'}
+                        </div>
+                        <div>
+                          <p className="font-black text-gray-900 leading-tight italic">{user.name || "Unnamed User"}</p>
+                          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-tighter mt-0.5">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-8">
+                      <span className={`flex items-center gap-1.5 text-[9px] font-black px-3 py-1.5 rounded-full w-fit uppercase tracking-[0.15em] border ${
+                        getDisplayRole(user.role) === 'STUDENT' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
+                        getDisplayRole(user.role) === 'CLIENT' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-gray-100 text-gray-600 border-gray-200'
+                      }`}>
+                        {getDisplayRole(user.role) === 'STUDENT' ? <GraduationCap size={12} /> : <Briefcase size={12} />}
+                        {getDisplayRole(user.role)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-8">
+                      {user.isVerified ? (
+                        <div className="flex items-center gap-1.5 text-emerald-600 text-[10px] font-black uppercase tracking-[0.1em]">
+                          <BadgeCheck size={18} /> Verified
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-orange-500 text-[10px] font-black uppercase tracking-[0.1em] opacity-80">
+                          <ShieldCheck size={18} /> Pending Audit
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-10 py-8 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button className="p-3 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" title="Suspend Account">
+                          <UserX size={18} />
+                        </button>
+                        <button className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all">
+                          <MoreVertical size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
         
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="p-32 text-center space-y-4">
             <Users className="mx-auto text-gray-100" size={64} />
             <h3 className="font-black text-gray-900 italic text-xl">User Not Found</h3>
-            <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">Adjust your search or filters to find the account.</p>
+            <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">No active registrations match your filters.</p>
           </div>
         )}
       </div>
