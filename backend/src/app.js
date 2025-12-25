@@ -11,13 +11,35 @@ import routes from "./routes/index.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import { swaggerSpec } from "./swagger.js";
 
-const app = express(); // 1. Initialize first
+// Import custom routes using ES Modules to replace the invalid 'require' calls
+import customJobRoutes from './routes/jobRoutes.js';
+import customAdminRoutes from './routes/adminRoutes.js';
 
-// 2. Security Middlewares
-app.use(helmet());
+const app = express(); 
+
+// 1. Security Middlewares
+// Set crossOriginResourcePolicy to false so images can load on the frontend
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: false
+}));
+
 app.use(xss());
 app.use(mongoSanitize());
-app.use(cors());
+
+// 2. Production CORS Configuration
+// Must match allowedOrigins in server.js and allow credentials for JWT cookies
+app.use(cors({
+    origin: [
+        "https://manlham-tech.vercel.app", 
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -29,8 +51,14 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
-// 4. Routes
+// 4. Routes Mounting
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Mount specialized admin and job routes to match your server.js logic
+app.use('/api/v1/jobs', customJobRoutes);
+app.use('/api/v1/admin', customAdminRoutes);
+
+// General API router
 app.use("/api", routes);
 
 app.get("/", (req, res) => {
@@ -39,8 +67,5 @@ app.get("/", (req, res) => {
 
 // 5. Error Handling (MUST be last)
 app.use(errorHandler);
-
-app.use('/api/v1/jobs', require('./routes/jobRoutes'));
-app.use('/api/v1/admin', require('./routes/adminRoutes'));
 
 export default app;
