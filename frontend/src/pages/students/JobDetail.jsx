@@ -45,6 +45,7 @@ export default function JobDetail() {
   }, [id]);
 
   const handleApply = async () => {
+    // Basic validation
     if (!bidAmount || bidAmount <= 0) {
       return alert("Please enter a valid bid amount.");
     }
@@ -55,20 +56,18 @@ export default function JobDetail() {
     try {
       setSubmitting(true);
       
-      // ✅ FIX: Aligned payload keys with your backend validation error
-      // 'jobId' -> 'job' 
-      // 'message' -> 'proposal'
+      // ✅ Matches application.model.js keys: 'job', 'proposal', 'bidAmount'
       await api.post(`/applications`, {
-        job: id,         
-        bidAmount: Number(bidAmount),
-        proposal: message, 
+        job: id,               // Backend expects 'job'
+        bidAmount: Number(bidAmount), // Backend expects 'bidAmount'
+        proposal: message,     // Backend expects 'proposal'
       });
 
       alert("Proposal transmitted successfully!");
-      navigate("/students/dashboard"); // Or wherever your applications list is
+      navigate("/students/dashboard"); 
     } catch (err) {
       console.error("Application Error:", err);
-      // Extracts the specific validation message from the backend if available
+      // Extracts specific error like "You have already applied for this job"
       const errorMsg = err.response?.data?.message || "Failed to transmit proposal.";
       alert(errorMsg);
     } finally {
