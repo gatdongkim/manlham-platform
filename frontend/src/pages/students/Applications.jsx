@@ -81,7 +81,7 @@ export default function Applications() {
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">{app.job?.title || 'Untitled Project'}</p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">Nexus Verified</p>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase">Manlham Verified</p>
                         </div>
                       </div>
                     </td>

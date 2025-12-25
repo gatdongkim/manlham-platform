@@ -16,7 +16,7 @@ export default function JobDetail() {
   const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [bidAmount, setBidAmount] = useState("");
-  const [message, setMessage] = useState(""); // Added message state
+  const [message, setMessage] = useState(""); 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -26,7 +26,6 @@ export default function JobDetail() {
         setLoading(true);
         const { data } = await api.get(`/jobs/${id}`);
 
-        // Robust Data Extraction
         const jobData = data?.data || data?.job || (data?._id ? data : null);
 
         if (jobData) {
@@ -56,18 +55,22 @@ export default function JobDetail() {
     try {
       setSubmitting(true);
       
-      // ✅ Hits /api/v1/applications/ handled by applicationRoutes.js
+      // ✅ FIX: Aligned payload keys with your backend validation error
+      // 'jobId' -> 'job' 
+      // 'message' -> 'proposal'
       await api.post(`/applications`, {
-        jobId: id,
-        bidAmount,
-        message, // Sending the student's proposal text
+        job: id,         
+        bidAmount: Number(bidAmount),
+        proposal: message, 
       });
 
       alert("Proposal transmitted successfully!");
-      navigate("/students/applications");
+      navigate("/students/dashboard"); // Or wherever your applications list is
     } catch (err) {
       console.error("Application Error:", err);
-      alert(err.response?.data?.message || "Failed to transmit proposal. Ensure you are logged in as a Verified Pro.");
+      // Extracts the specific validation message from the backend if available
+      const errorMsg = err.response?.data?.message || "Failed to transmit proposal.";
+      alert(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +109,6 @@ export default function JobDetail() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-32 p-4">
-      {/* Header & Back Button */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <BackButton text="Back to Marketplace" to="/marketplace" />
         <div className="flex items-center gap-3">
@@ -117,7 +119,6 @@ export default function JobDetail() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        {/* Left Column: Job Info */}
         <div className="lg:col-span-8 space-y-10">
           <header className="space-y-4">
             <h1 className="text-5xl md:text-6xl font-black text-gray-900 tracking-tight leading-[0.9] italic uppercase">
@@ -145,7 +146,6 @@ export default function JobDetail() {
           </div>
         </div>
 
-        {/* Right Column: Bid Sidebar */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-gray-900 p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
             <div className="relative space-y-8">
@@ -159,7 +159,6 @@ export default function JobDetail() {
                 </p>
               </div>
 
-              {/* Bid Amount Input */}
               <div className="space-y-4">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
                   Your Offer
@@ -175,7 +174,6 @@ export default function JobDetail() {
                 </div>
               </div>
 
-              {/* Proposal Textarea - NEW FIELD */}
               <div className="space-y-4">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
                   Why are you a good fit?
