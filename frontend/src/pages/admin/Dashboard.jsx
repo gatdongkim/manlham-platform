@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import API from "../../api/http"; 
-// ❌ Removed DashboardLayout import to prevent layout nesting
-import { Users, FileText, CheckCircle, Loader2, Briefcase, ArrowLeft, RefreshCw } from "lucide-react";
+import { Users, FileText, CheckCircle, Loader2, Briefcase, ArrowLeft, RefreshCw, AlertTriangle } from "lucide-react";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -16,29 +15,32 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
 
-      // ✅ Fetch platform-wide data
-      const [jobsRes, usersRes] = await Promise.all([
-        API.get("/jobs"),
-        API.get("/users") 
+      // ✅ FIXED: Use your specialized Admin routes
+      // We hit '/admin/stats' for the counters and '/admin/users' + '/jobs' for details
+      const [statsRes, jobsRes] = await Promise.all([
+        API.get("/admin/stats"),
+        API.get("/jobs") 
       ]);
 
-      const allJobs = jobsRes.data.data || jobsRes.data || [];
-      const allUsers = usersRes.data.data || usersRes.data || [];
+      // ✅ Update Stats from admin.controller.js getStats()
+      // Note: your controller returns totalStudents, totalClients, activeJobs
+      const s = statsRes.data.data;
+      setStats({ 
+        totalUsers: (s.totalStudents || 0) + (s.totalClients || 0), 
+        totalJobs: s.activeJobs || 0 
+      });
 
-      // Filter for jobs that need attention
+      // ✅ Filter for pending jobs from the full list
+      const allJobs = jobsRes.data.data || [];
       const pending = allJobs.filter(job => 
         job.status === "PENDING" || job.paymentStatus === "UNPAID"
       );
-
       setPendingJobs(pending);
-      setStats({ 
-        totalJobs: allJobs.length, 
-        totalUsers: allUsers.length 
-      });
 
     } catch (err) {
       console.error("Admin Data Error:", err);
-      setError("Failed to load administration data. Verify you have Admin privileges.");
+      // If this triggers, your role in MongoDB is likely not "ADMIN"
+      setError("Verification Failed: You do not have Administrative Privileges.");
     } finally {
       setLoading(false);
     }
@@ -49,26 +51,27 @@ export default function AdminDashboard() {
   }, []);
 
   const handleApprove = async (jobId) => {
+    if(!window.confirm("Approve this project for public listing?")) return;
     try {
-      await API.patch(`/jobs/${jobId}`, { status: "APPROVED", paymentStatus: "PAID" });
+      // ✅ Update status to APPROVED so it shows in the Marketplace
+      await API.patch(`/jobs/${jobId}`, { status: "APPROVED" });
       setPendingJobs(prev => prev.filter(job => job._id !== jobId));
-      alert("Job approved and moved to live listings!");
+      // Refresh stats after approval
+      fetchAdminData();
     } catch (err) {
       alert("Error: Could not approve job.");
     }
   };
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center min-h-[60-screen]">
+    <div className="flex flex-col items-center justify-center min-h-[60vh]">
       <Loader2 className="animate-spin text-indigo-600 mb-4" size={48} />
-      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Securing Admin Session...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Syncing Platform Oversight...</p>
     </div>
   );
 
-  // ✅ Return only the content. Layout is provided by the parent Route in App.jsx
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
-      {/* Header */}
       <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="p-3 bg-white hover:bg-gray-50 rounded-2xl border border-gray-100 transition-all shadow-sm">
@@ -85,12 +88,15 @@ export default function AdminDashboard() {
       </header>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-100 text-red-600 text-[10px] font-black uppercase tracking-widest rounded-2xl text-center">
-          {error}
+        <div className="p-6 bg-rose-50 border border-rose-100 rounded-[2rem] flex items-center gap-4">
+          <AlertTriangle className="text-rose-600" size={24} />
+          <div>
+            <p className="text-rose-600 text-[10px] font-black uppercase tracking-widest">Access Denied</p>
+            <p className="text-rose-900 font-bold text-sm">{error}</p>
+          </div>
         </div>
       )}
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 flex items-center gap-6 shadow-sm hover:shadow-md transition-all">
           <div className="w-16 h-16 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600">
@@ -107,13 +113,12 @@ export default function AdminDashboard() {
             <Briefcase size={32}/>
           </div>
           <div>
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Global Listings</p>
+            <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Live Listings</p>
             <p className="text-4xl font-black text-gray-900">{stats.totalJobs}</p>
           </div>
         </div>
       </div>
 
-      {/* Queue Table */}
       <div className="bg-white rounded-[3rem] border border-gray-100 shadow-xl shadow-indigo-100/10 overflow-hidden">
         <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
           <div className="flex items-center gap-3">
@@ -143,10 +148,11 @@ export default function AdminDashboard() {
 
                   <div className="flex items-center gap-6 w-full md:w-auto">
                     <div className="text-right hidden sm:block">
-                      <p className="text-lg font-black text-gray-900">
-                        {job.budget?.toLocaleString()} <span className="text-sm font-bold text-gray-400">{job.currency || 'USD'}</span>
+                      <p className="text-lg font-black text-gray-900 italic">
+                        <span className="text-[10px] mr-1 opacity-50">SSP</span>
+                        {job.budget?.toLocaleString()}
                       </p>
-                      <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest">Escrow Ready</p>
+                      <p className="text-[9px] text-emerald-600 font-black uppercase tracking-widest">Verify Payment</p>
                     </div>
                     <button 
                       onClick={() => handleApprove(job._id)} 
