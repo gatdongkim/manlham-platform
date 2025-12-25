@@ -2,7 +2,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import SocialFeed from "../components/SocialFeed"; // Added this import
 import { 
   CheckCircle2, 
   Zap, 
@@ -136,9 +135,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* SOCIAL FEED - Added here */}
-      <SocialFeed />
 
       {/* CALL TO ACTION */}
       <section className="py-24 text-center">
