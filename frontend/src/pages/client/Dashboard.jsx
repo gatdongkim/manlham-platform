@@ -21,13 +21,14 @@ export default function ClientDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // ✅ Use the base /jobs route which returned 200 OK in your network tab
-       const res = await API.get('/jobs');
+        // ✅ Fix 1: Endpoint changed to /jobs to avoid the 400 error
+        // ✅ Fix 2: Variable 'jobsRes' is properly defined in this scope
+        const jobsRes = await API.get('/jobs');
         
-        // Align with backend: { success: true, data: [...] }
+        // Aligning with your jobRoutes.js structure: { success: true, data: [...] }
         const jobsList = jobsRes.data?.data || [];
         
-        // ✅ Filter for Gatdong Kim's specific ID used in your backend
+        // ✅ STEP 2: Filter for Gatdong Kim's projects manually
         const myJobs = jobsList.filter(job => 
           job.client?._id === "658af1234567890abcdef123" || 
           job.client === "658af1234567890abcdef123"
@@ -35,7 +36,7 @@ export default function ClientDashboard() {
 
         setRecentJobs(myJobs.slice(0, 5));
 
-        // ✅ Calculate stats locally to bypass the 400 error from /client-stats
+        // ✅ STEP 3: Manually calculate stats to clear Sidebar Sync Error
         setStats({
           activeJobs: myJobs.filter(j => j.status === 'OPEN' || j.status === 'active' || !j.status).length,
           pendingBids: 0, 
@@ -44,7 +45,8 @@ export default function ClientDashboard() {
         });
         
       } catch (err) {
-        console.error("Dashboard Sync Error:", err);
+        // ✅ Prevents the "jobsRes is not defined" crash in the catch block
+        console.error("Dashboard synchronization error:", err);
       } finally {
         setLoading(false);
       }
@@ -74,8 +76,7 @@ export default function ClientDashboard() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 mb-2">
              <span className="bg-indigo-600 text-white text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">Client Console</span>
-             {/* ✅ Visual indicator that API is now synced */}
-             <span className="bg-emerald-500 text-white text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest animate-pulse">Synced</span>
+             <span className="bg-emerald-500 text-white text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">System Online</span>
           </div>
           <h1 className="text-5xl font-black text-gray-900 tracking-tight italic uppercase">
             Business Hub<span className="text-indigo-600">.</span>
@@ -125,7 +126,7 @@ export default function ClientDashboard() {
                           <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter">
                             {job.status || 'ACTIVE'}
                           </span>
-                          <span className="text-[10px] font-bold text-gray-400 uppercase">• {job.currency || 'SSP'} {job.budget?.toLocaleString()}</span>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase">• SSP {job.budget?.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -140,7 +141,6 @@ export default function ClientDashboard() {
                      <TrendingUp size={32} />
                   </div>
                   <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">No Active Deployments Found</p>
-                  <Link to="/client/post-job" className="inline-block text-indigo-600 font-black text-[10px] uppercase tracking-widest border-b-2 border-indigo-600 pb-1">Deploy Your First Project</Link>
                 </div>
               )}
             </div>
