@@ -22,7 +22,7 @@ export default function ClientDashboard() {
     const fetchDashboardData = async () => {
       try {
         // ✅ Use the base /jobs route which returned 200 OK in your network tab
-        const jobsRes = await API.get('/jobs');
+       const res = await API.get('/jobs');
         
         // Align with backend: { success: true, data: [...] }
         const jobsList = jobsRes.data?.data || [];
