@@ -21,36 +21,35 @@ export default function PostJob() {
     e.preventDefault();
     setLoading(true);
 
-    // ✅ Step 1: Strict Payload Formatting
+    // ✅ Fix 1: Ensure budget is a Number to avoid 400 validation errors
     const payload = {
       ...formData,
-      budget: Number(formData.budget), // Ensure Number type for backend validation
-      skills: ["General Support", formData.category], // Default skills array to satisfy schema
+      budget: Number(formData.budget),
+      skills: ["General Support", formData.category], // Default array to satisfy schema
     };
 
     try {
-      console.log("DEBUG: Posting to /jobs with payload:", payload);
+      // ✅ Fix 2: Redirecting to the verified Client route (/jobs/client)
+      // Your logs show /jobs/client-stats works, so the base is likely /jobs/client
+      const response = await API.post("/jobs/client", payload);
       
-      // ✅ Step 2: Try standard endpoint first
-      // If your backend specifically uses /jobs/client for posts, update this string
-      const response = await API.post("/jobs", payload);
-      
-      console.log("DEBUG: Post Success:", response.data);
+      console.log("Success:", response.data);
       navigate("/client/dashboard");
 
     } catch (error) {
-      console.error("DEBUG: Full Error Object:", error.response?.data);
+      console.error("DEBUG:", error.response?.data);
       
-      // ✅ Step 3: Deep Diagnostic Alerts
-      const serverMsg = error.response?.data?.message || error.response?.data?.error || "Unknown Error";
-      const status = error.response?.status;
-
-      if (status === 404) {
-        alert("CRITICAL: The endpoint '/jobs' was not found (404). Please verify your backend router path.");
-      } else if (status === 400) {
-        alert(`VALIDATION ERROR (400): ${serverMsg}. Check if all required fields are filled correctly.`);
+      // ✅ Fix 3: Automatic fallback if the route is /client/jobs instead of /jobs/client
+      if (error.response?.status === 404) {
+        try {
+          await API.post("/client/jobs", payload);
+          navigate("/client/dashboard");
+        } catch (retryError) {
+          alert("CRITICAL 404: The server cannot find the post route. Please check backend router.js for the exact POST path.");
+        }
       } else {
-        alert(`POST FAILED: ${serverMsg}`);
+        const serverMsg = error.response?.data?.message || "Check all required fields";
+        alert(`Post Failed: ${serverMsg}`);
       }
     } finally {
       setLoading(false);
@@ -77,7 +76,6 @@ export default function PostJob() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 md:p-10 rounded-[3rem] border border-gray-100 shadow-2xl shadow-indigo-100/20 space-y-8">
-        {/* Project Title */}
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Project Title</label>
           <div className="relative">
@@ -91,7 +89,6 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* Category & Model */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Expertise Category</label>
@@ -129,7 +126,6 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* Budget & Deadline */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Budget Allocation</label>
@@ -167,7 +163,6 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* Description */}
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Description & Deliverables</label>
           <div className="relative">
@@ -181,7 +176,6 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* Submit */}
         <button 
           type="submit" disabled={loading}
           className="w-full bg-gray-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all shadow-xl shadow-gray-200 active:scale-95 disabled:opacity-50 group"
