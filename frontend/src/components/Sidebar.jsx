@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import api from "../api/http"; // ✅ Added API import for dynamic links
 import { 
   LayoutDashboard, Briefcase, Users, Wallet, MessageCircle, Settings, 
   ShieldAlert, FileText, LogOut, ClipboardList, Search, CheckCircle, 
@@ -14,6 +15,25 @@ export default function Sidebar({ role, closeMobileMenu }) {
   const { logout } = useAuth();
   
   const [hasNewMessage] = useState(true); 
+  const [latestJobId, setLatestJobId] = useState(null); // ✅ Track latest project ID
+
+  // ✅ Fetch the latest job to make "Manage Work" and "Applications" dynamic
+  useEffect(() => {
+    if (role?.toUpperCase() === "MSME") {
+      const fetchLatest = async () => {
+        try {
+          const res = await api.get('/client/jobs');
+          const jobs = res.data.data || res.data;
+          if (Array.isArray(jobs) && jobs.length > 0) {
+            setLatestJobId(jobs[0]._id);
+          }
+        } catch (err) {
+          console.error("Sidebar link fetch failed:", err);
+        }
+      };
+      fetchLatest();
+    }
+  }, [role]);
 
   const menuConfig = {
     PRO: [
@@ -28,14 +48,24 @@ export default function Sidebar({ role, closeMobileMenu }) {
       { label: "Dashboard", path: "/client/dashboard", icon: LayoutDashboard },
       { label: "Post a Job", path: "/client/post-job", icon: PlusSquare },
       { label: "My Projects", path: "/client/jobs", icon: Briefcase },
-      { label: "Manage Work", path: "/client/manage-work", icon: Zap },
-      { label: "Applications", path: "/client/applications", icon: Layers },
+      // ✅ Dynamic Paths: Uses the actual Job ID for "Manage Work" and "Applications"
+      { 
+        label: "Manage Work", 
+        path: latestJobId ? `/client/manage-work/${latestJobId}` : "/client/manage-work", 
+        icon: Zap 
+      },
+      { 
+        label: "Applications", 
+        path: latestJobId ? `/client/applications/${latestJobId}` : "/client/applications", 
+        icon: Layers 
+      },
       { label: "Saved Talent", path: "/client/remember-talent", icon: Star },
       { label: "Payments", path: "/client/payments", icon: CreditCard },
       { label: "Messages", path: "/client/chats", icon: MessageCircle },
       { label: "Support", path: "/client/support", icon: Headphones, badge: true },
     ],
     STAFF: [
+      // ... (Rest of staff config remains same)
       { label: "Staff Portal", path: "/staff/dashboard", icon: LayoutDashboard },
       { label: "My Meetings", path: "/staff/meetings", icon: Calendar },
       { label: "Support Tickets", path: "/staff/support", icon: MessageCircle },
@@ -44,6 +74,7 @@ export default function Sidebar({ role, closeMobileMenu }) {
       { label: "Disputes", path: "/staff/disputes", icon: Gavel },
     ],
     ADMIN: [
+      // ... (Rest of admin config remains same)
       { label: "Control Panel", path: "/admin/dashboard", icon: LayoutDashboard },
       { label: "Users", path: "/admin/users", icon: Users },
       { label: "Client Analytics", path: "/admin/analytics", icon: BarChart3 },
@@ -61,6 +92,7 @@ export default function Sidebar({ role, closeMobileMenu }) {
     ]
   };
 
+  // ... (Rest of component rendering remains same as provided in your prompt)
   const navLinks = menuConfig[role?.toUpperCase()] || [];
 
   const handleLogoutClick = () => {
@@ -71,22 +103,10 @@ export default function Sidebar({ role, closeMobileMenu }) {
 
   return (
     <div className="flex flex-col h-full p-6 bg-white">
-      
-            {/* ✅ Logo Linked to Home Page */}
-      <Link 
-        to="/" 
-        onClick={closeMobileMenu}
-        className="flex items-center gap-3 px-2 mb-10 group transition-all duration-200"
-      >
-        {/* Logo Container - Background and shadow removed to show logo.png clearly */}
+      <Link to="/" onClick={closeMobileMenu} className="flex items-center gap-3 px-2 mb-10 group transition-all duration-200">
         <div className="w-10 h-10 flex items-center justify-center group-hover:scale-105 transition-transform">
-          <img 
-            src="/logo.png" 
-            alt="Manlham Tech Support Logo" 
-            className="w-full h-full object-contain" 
-          />
+          <img src="/logo.png" alt="Manlham Logo" className="w-full h-full object-contain" />
         </div>
-
         <span className="text-xl font-black text-gray-900 tracking-tighter italic">
           Manlham<span className="text-indigo-600">.</span>
         </span>
@@ -105,23 +125,16 @@ export default function Sidebar({ role, closeMobileMenu }) {
               key={link.path}
               to={link.path}
               onClick={closeMobileMenu}
-              className={`
-                flex items-center justify-between px-4 py-3 rounded-2xl font-bold text-xs transition-all duration-200 group
-                ${isActive 
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" 
-                  : "text-gray-500 hover:bg-gray-50 hover:text-indigo-600"}
-              `}
+              className={`flex items-center justify-between px-4 py-3 rounded-2xl font-bold text-xs transition-all duration-200 group
+                ${isActive ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "text-gray-500 hover:bg-gray-50 hover:text-indigo-600"}`}
             >
               <div className="flex items-center gap-3">
                 <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
                 {link.label}
               </div>
-
               {link.badge && hasNewMessage && !isActive && (
                 <span className="flex items-center gap-1">
-                   <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 animate-pulse uppercase tracking-tighter">
-                     New
-                   </span>
+                   <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 animate-pulse uppercase tracking-tighter">New</span>
                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
                 </span>
               )}
@@ -131,10 +144,7 @@ export default function Sidebar({ role, closeMobileMenu }) {
       </nav>
 
       <div className="mt-auto pt-6 border-t border-gray-100">
-        <button 
-          onClick={handleLogoutClick}
-          className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl font-bold text-xs text-red-500 hover:bg-red-50 transition-colors"
-        >
+        <button onClick={handleLogoutClick} className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl font-bold text-xs text-red-500 hover:bg-red-50 transition-colors">
           <LogOut size={16} />
           Sign Out
         </button>
