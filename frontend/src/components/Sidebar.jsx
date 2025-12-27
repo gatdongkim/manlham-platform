@@ -7,42 +7,44 @@ import {
   ShieldAlert, FileText, LogOut, ClipboardList, Search, CheckCircle, 
   PlusSquare, Headphones, Calendar, BarChart3, Percent, ShieldCheck, 
   Gavel, UserCheck, History, Wallet as WalletIcon, Star, CreditCard, Zap, Layers,
-  Bug // ✅ Added for debugging
+  Bug
 } from "lucide-react";
 
 export default function Sidebar({ role, closeMobileMenu }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout, user } = useAuth(); // ✅ Extract user to verify ID
+  const { logout } = useAuth();
   
   const [hasNewMessage] = useState(true); 
   const [latestJobId, setLatestJobId] = useState(null);
   const [debugInfo, setDebugInfo] = useState({ count: 0, status: 'idle' });
 
+  // ✅ Corrected Endpoint to /jobs/client to resolve the 404 console error
   useEffect(() => {
     if (role?.toUpperCase() === "MSME") {
       const fetchLatest = async () => {
         setDebugInfo(prev => ({ ...prev, status: 'fetching...' }));
         try {
-          const res = await api.get('/client/jobs');
+          // Changed from /client/jobs to /jobs/client to match backend routes
+          const res = await api.get('/jobs/client');
           const jobs = res.data.data || res.data;
           
           if (Array.isArray(jobs) && jobs.length > 0) {
             setLatestJobId(jobs[0]._id);
-            setDebugInfo({ count: jobs.length, status: 'Jobs Found' });
+            setDebugInfo({ count: jobs.length, status: 'Jobs Synced' });
           } else {
-            setDebugInfo({ count: 0, status: 'No Jobs in DB for this user' });
+            setDebugInfo({ count: 0, status: 'No Projects Found' });
           }
         } catch (err) {
           console.error("Sidebar link fetch failed:", err);
-          setDebugInfo({ count: 0, status: 'API Error' });
+          const errStatus = err.response?.status || 'Network Error';
+          setDebugInfo({ count: 0, status: `API Error (${errStatus})` });
         }
       };
       fetchLatest();
     }
   }, [role]);
 
-  // ... (menuConfig remains the same)
   const menuConfig = {
     PRO: [
       { label: "Dashboard", path: "/students/dashboard", icon: LayoutDashboard },
@@ -71,7 +73,30 @@ export default function Sidebar({ role, closeMobileMenu }) {
       { label: "Messages", path: "/client/chats", icon: MessageCircle },
       { label: "Support", path: "/client/support", icon: Headphones, badge: true },
     ],
-    // ... STAFF and ADMIN configs
+    STAFF: [
+      { label: "Staff Portal", path: "/staff/dashboard", icon: LayoutDashboard },
+      { label: "My Meetings", path: "/staff/meetings", icon: Calendar },
+      { label: "Support Tickets", path: "/staff/support", icon: MessageCircle },
+      { label: "User Directory", path: "/staff/users", icon: Users },
+      { label: "Verification", path: "/staff/verification", icon: ShieldCheck },
+      { label: "Disputes", path: "/staff/disputes", icon: Gavel },
+    ],
+    ADMIN: [
+      { label: "Control Panel", path: "/admin/dashboard", icon: LayoutDashboard },
+      { label: "Users", path: "/admin/users", icon: Users },
+      { label: "Client Analytics", path: "/admin/analytics", icon: BarChart3 },
+      { label: "Revenue Model", path: "/admin/revenue", icon: Percent },
+      { label: "Verifications", path: "/admin/verification", icon: CheckCircle },
+      { label: "Platform Jobs", path: "/admin/applications", icon: Briefcase },
+      { label: "Post Manager", path: "/admin/post", icon: PlusSquare },
+      { label: "Payments", path: "/admin/payments", icon: Wallet },
+      { label: "Help Desk", path: "/admin/support", icon: Headphones },
+      { label: "Audit Logs", path: "/admin/audit", icon: FileText },
+      { label: "Disputes", path: "/admin/disputes", icon: ShieldAlert },
+      { label: "Staff Requests", path: "/admin/staff-review", icon: UserCheck },
+      { label: "Staff Activity", path: "/admin/staff-activity", icon: History },
+      { label: "Withdrawals", path: "/admin/withdrawals", icon: WalletIcon },
+    ]
   };
 
   const navLinks = menuConfig[role?.toUpperCase()] || [];
@@ -93,14 +118,16 @@ export default function Sidebar({ role, closeMobileMenu }) {
         </span>
       </Link>
 
-      {/* ✅ DEBUG PANEL: Only visible during testing */}
-      {role === "MSME" && (
+      {/* ✅ Debug Panel for verifying API connectivity */}
+      {role?.toUpperCase() === "MSME" && (
         <div className="mb-6 p-3 bg-gray-50 rounded-xl border border-dashed border-gray-200">
           <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
             <Bug size={10} /> Sync Status
           </p>
-          <p className="text-[10px] font-bold text-indigo-600 mt-1">{debugInfo.status}</p>
-          <p className="text-[10px] text-gray-500 font-medium">Found: {debugInfo.count} projects</p>
+          <p className={`text-[10px] font-bold mt-1 ${debugInfo.status.includes('Error') ? 'text-red-500' : 'text-indigo-600'}`}>
+            {debugInfo.status}
+          </p>
+          <p className="text-[10px] text-gray-500 font-medium italic">Projects found: {debugInfo.count}</p>
         </div>
       )}
 
@@ -124,6 +151,12 @@ export default function Sidebar({ role, closeMobileMenu }) {
                 <Icon size={16} strokeWidth={isActive ? 2.5 : 2} />
                 {link.label}
               </div>
+              {link.badge && hasNewMessage && !isActive && (
+                <span className="flex items-center gap-1">
+                   <span className="text-[9px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 animate-pulse uppercase tracking-tighter">New</span>
+                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                </span>
+              )}
             </Link>
           );
         })}

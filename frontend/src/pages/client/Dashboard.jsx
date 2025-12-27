@@ -21,12 +21,23 @@ export default function ClientDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        // ✅ Fix 1: Fetch Stats - Using the standard jobs/client-stats route
         const statsRes = await API.get('/jobs/client-stats');
-        setStats(statsRes.data);
+        // Robust data mapping to handle various API response formats
+        const statsData = statsRes.data?.data || statsRes.data;
+        if (statsData) {
+          setStats({
+            activeJobs: statsData.activeJobs || 0,
+            pendingBids: statsData.pendingBids || 0,
+            completedJobs: statsData.completedJobs || 0,
+            totalSpent: statsData.totalSpent || 0
+          });
+        }
 
-        const jobsRes = await API.get('/jobs/my-jobs');
-        // Assuming your backend returns { success: true, data: [...] }
-        setRecentJobs(jobsRes.data.data?.slice(0, 5) || []);
+        // ✅ Fix 2: Fetch Recent Jobs - Aligned with the verified /jobs/client route
+        const jobsRes = await API.get('/jobs/client');
+        const jobsList = jobsRes.data?.data || jobsRes.data || [];
+        setRecentJobs(Array.isArray(jobsList) ? jobsList.slice(0, 5) : []);
         
       } catch (err) {
         console.error("Dashboard fetch error:", err);
@@ -55,7 +66,6 @@ export default function ClientDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto pb-20 p-4">
-      {/* Header Section */}
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2 mb-2">
@@ -75,7 +85,6 @@ export default function ClientDashboard() {
         </Link>
       </header>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {statCards.map((stat) => (
           <div key={stat.label} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
@@ -89,7 +98,6 @@ export default function ClientDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Main Content: Recent Jobs */}
         <div className="lg:col-span-8 space-y-6">
           <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
@@ -113,11 +121,12 @@ export default function ClientDashboard() {
                           }`}>
                             {job.status}
                           </span>
-                          <span className="text-[10px] font-bold text-gray-400 uppercase">• {job.paymentStatus}</span>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase">• {job.paymentStatus || 'UNPAID'}</span>
                         </div>
                       </div>
                     </div>
-                    <Link to={`/client/jobs/${job._id}`} className="bg-white p-3 rounded-xl border border-gray-100 text-gray-400 hover:text-indigo-600 hover:shadow-md transition-all">
+                    {/* ✅ Ensures clicking the project leads to the correct applications view */}
+                    <Link to={`/client/applications/${job._id}`} className="bg-white p-3 rounded-xl border border-gray-100 text-gray-400 hover:text-indigo-600 hover:shadow-md transition-all">
                       <ArrowUpRight size={20} />
                     </Link>
                   </div>
@@ -135,9 +144,7 @@ export default function ClientDashboard() {
           </div>
         </div>
 
-        {/* Sidebar Widgets */}
         <div className="lg:col-span-4 space-y-8">
-          {/* Escrow Promo */}
           <div className="bg-gray-900 p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
             <div className="absolute -right-4 -top-4 w-24 h-24 bg-indigo-600 rounded-full blur-[40px] opacity-30"></div>
             <h3 className="font-black text-xl italic tracking-tight mb-4 uppercase">Escrow Protocol<span className="text-indigo-500">.</span></h3>
@@ -152,12 +159,11 @@ export default function ClientDashboard() {
             </button>
           </div>
 
-          {/* Quick Actions */}
           <div className="bg-white p-8 rounded-[3rem] border border-gray-100 shadow-sm">
             <h3 className="font-black text-gray-900 uppercase text-[10px] tracking-widest mb-6">Operations</h3>
             <div className="space-y-3">
-              <Link to="/client/discover-students" className="flex items-center justify-between p-5 bg-gray-50 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-indigo-600 hover:text-white transition-all group">
-                Find Professionals <ArrowUpRight size={16} className="text-indigo-400 group-hover:text-white" />
+              <Link to="/marketplace" className="flex items-center justify-between p-5 bg-gray-50 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-indigo-600 hover:text-white transition-all group">
+                Professional Marketplace <ArrowUpRight size={16} className="text-indigo-400 group-hover:text-white" />
               </Link>
               <Link to="/client/chats" className="flex items-center justify-between p-5 bg-gray-50 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-indigo-600 hover:text-white transition-all group">
                 Active Discussions <ArrowUpRight size={16} className="text-indigo-400 group-hover:text-white" />
@@ -167,36 +173,19 @@ export default function ClientDashboard() {
         </div>
       </div>
 
-      {/* Escrow Modal UI */}
       {showEscrowInfo && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-md">
           <div className="bg-white rounded-[3.5rem] max-w-lg w-full p-12 shadow-2xl animate-in fade-in zoom-in duration-300 relative border border-indigo-100">
             <button onClick={() => setShowEscrowInfo(false)} className="absolute right-8 top-8 p-3 hover:bg-gray-100 rounded-full transition-all">
               <X size={20} className="text-gray-400" />
             </button>
-
             <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center text-indigo-600 mb-8">
               <ShieldCheck size={40} />
             </div>
-
             <h2 className="text-3xl font-black text-gray-900 mb-4 italic uppercase tracking-tight">Escrow Security<span className="text-indigo-600">.</span></h2>
             <p className="text-gray-500 text-sm font-medium leading-relaxed mb-8">
               Your payments are decentralized and secure. Funds never leave the Manlham Tech Support vault without your digital signature.
             </p>
-
-            <div className="space-y-6 mb-10">
-              {[
-                { title: "DEPOSIT", desc: "You fund the milestone via m-Gurush." },
-                { title: "PROTECTION", desc: "Capital is held by SkillLink Escrow." },
-                { title: "RELEASE", desc: "Payout happens only after your approval." }
-              ].map((step, i) => (
-                <div key={i} className="flex gap-6 items-start">
-                  <div className="font-black text-indigo-600 text-[10px] uppercase tracking-widest pt-1 min-w-[80px]">{step.title}</div>
-                  <div className="text-sm text-gray-600 font-bold">{step.desc}</div>
-                </div>
-              ))}
-            </div>
-
             <button 
               onClick={() => setShowEscrowInfo(false)}
               className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-indigo-600 transition-all active:scale-95"
