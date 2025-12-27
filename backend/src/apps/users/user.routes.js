@@ -6,8 +6,7 @@ const router = express.Router();
 
 /**
  * @route   GET /api/v1/users
- * @desc    Get all users for Identity management
- * @access  Private/Admin 
+ * @desc    Get all users (Identity Page)
  */
 router.get('/', authMiddleware(), adminMiddleware, userController.getAllUsers);
 
