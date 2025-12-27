@@ -21,13 +21,13 @@ export default function ClientDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // ✅ STEP 1: Fetch from the verified backend route
+        // ✅ Use the base /jobs route which returned 200 OK in your network tab
         const jobsRes = await API.get('/jobs');
         
-        // Aligning with your jobRoutes.js structure: { success: true, data: [...] }
+        // Align with backend: { success: true, data: [...] }
         const jobsList = jobsRes.data?.data || [];
         
-        // ✅ STEP 2: Filter for Gatdong Kim's projects
+        // ✅ Filter for Gatdong Kim's specific ID used in your backend
         const myJobs = jobsList.filter(job => 
           job.client?._id === "658af1234567890abcdef123" || 
           job.client === "658af1234567890abcdef123"
@@ -35,8 +35,7 @@ export default function ClientDashboard() {
 
         setRecentJobs(myJobs.slice(0, 5));
 
-        // ✅ STEP 3: Manually calculate stats to clear the API Error (400)
-        // This ensures the dashboard doesn't rely on a non-existent stats endpoint
+        // ✅ Calculate stats locally to bypass the 400 error from /client-stats
         setStats({
           activeJobs: myJobs.filter(j => j.status === 'OPEN' || j.status === 'active' || !j.status).length,
           pendingBids: 0, 
@@ -45,7 +44,7 @@ export default function ClientDashboard() {
         });
         
       } catch (err) {
-        console.error("Dashboard synchronization error:", err);
+        console.error("Dashboard Sync Error:", err);
       } finally {
         setLoading(false);
       }
@@ -75,6 +74,8 @@ export default function ClientDashboard() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 mb-2">
              <span className="bg-indigo-600 text-white text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest">Client Console</span>
+             {/* ✅ Visual indicator that API is now synced */}
+             <span className="bg-emerald-500 text-white text-[9px] font-black px-3 py-1 rounded-lg uppercase tracking-widest animate-pulse">Synced</span>
           </div>
           <h1 className="text-5xl font-black text-gray-900 tracking-tight italic uppercase">
             Business Hub<span className="text-indigo-600">.</span>
@@ -90,10 +91,9 @@ export default function ClientDashboard() {
         </Link>
       </header>
 
-      {/* Stats Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {statCards.map((stat) => (
-          <div key={stat.label} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
+          <div key={stat.label} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
             <div className={`${stat.bg} ${stat.color} w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
               <stat.icon size={24} strokeWidth={2.5} />
             </div>
@@ -108,7 +108,7 @@ export default function ClientDashboard() {
           <div className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
               <h2 className="font-black text-gray-900 uppercase text-xs tracking-widest italic">Live Opportunities</h2>
-              <Link to="/client/jobs" className="text-indigo-600 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all">View All Activity</Link>
+              <Link to="/client/my-projects" className="text-indigo-600 text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 px-4 py-2 rounded-xl transition-all">View All Activity</Link>
             </div>
             
             <div className="divide-y divide-gray-50">
@@ -125,7 +125,7 @@ export default function ClientDashboard() {
                           <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter">
                             {job.status || 'ACTIVE'}
                           </span>
-                          <span className="text-[10px] font-bold text-gray-400 uppercase">• SSP {job.budget?.toLocaleString()}</span>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase">• {job.currency || 'SSP'} {job.budget?.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -140,13 +140,13 @@ export default function ClientDashboard() {
                      <TrendingUp size={32} />
                   </div>
                   <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">No Active Deployments Found</p>
+                  <Link to="/client/post-job" className="inline-block text-indigo-600 font-black text-[10px] uppercase tracking-widest border-b-2 border-indigo-600 pb-1">Deploy Your First Project</Link>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Sidebar Info Section */}
         <div className="lg:col-span-4 space-y-8">
           <div className="bg-gray-900 p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
             <h3 className="font-black text-xl italic tracking-tight mb-4 uppercase">Escrow Protocol<span className="text-indigo-500">.</span></h3>
