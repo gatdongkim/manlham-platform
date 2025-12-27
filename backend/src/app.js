@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import xss from "xss-clean";
 import mongoSanitize from "express-mongo-sanitize";
 import swaggerUi from "swagger-ui-express";
@@ -16,18 +15,21 @@ import { swaggerSpec } from "./swagger.js";
 import authRoutes from './apps/auth/auth.routes.js';
 import paymentRoutes from './apps/payments/payment.routes.js';
 import applicationRoutes from './apps/applications/application.routes.js';
-import adminPanelRoutes from './apps/admin_panel/admin.routes.js';
 import userRoutes from './apps/users/user.routes.js';
 import studentRoutes from './apps/students/student.routes.js';
 import chatRoutes from './apps/chat/chat.routes.js';
 
-// Custom Route Overrides (Admin Stats & Jobs)
+// Custom Route Overrides
 import customJobRoutes from './routes/jobRoutes.js';
 import customAdminRoutes from './routes/adminRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express(); 
+
+// ✅ CRITICAL FIX: Trust proxy for Render deployment 
+// Resolves ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+app.set('trust proxy', 1);
 
 // 1. Security & CORS
 app.use(helmet({ crossOriginResourcePolicy: false, contentSecurityPolicy: false }));
@@ -45,10 +47,9 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 2. Unified Route Mounting
+// 2. Route Mounting
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Mount specialized v1 routes directly
 app.use('/api/v1/jobs', customJobRoutes); 
 app.use('/api/v1/admin', customAdminRoutes); 
 app.use('/api/v1/users', userRoutes);
@@ -58,7 +59,6 @@ app.use('/api/v1/applications', applicationRoutes);
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/chat', chatRoutes);
 
-// General fallback
 app.use("/api", routes);
 
 app.get("/", (req, res) => res.json({ message: "API Operational 🚀" }));
