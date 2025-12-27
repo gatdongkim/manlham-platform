@@ -251,7 +251,7 @@ export default function ManageWork() {
         <aside className="space-y-6">
           <div className="bg-gray-900 text-white p-10 rounded-[3rem] shadow-2xl relative overflow-hidden">
             <ShieldCheck className="text-indigo-400 mb-6" size={48} />
-            <h3 className="text-2xl font-black mb-4 tracking-tighter leading-tight italic">Nexus Escrow Protection<span className="text-indigo-500">.</span></h3>
+            <h3 className="text-2xl font-black mb-4 tracking-tighter leading-tight italic">Manlham Tech Support Escrow Protection<span className="text-indigo-500">.</span></h3>
             <p className="text-gray-400 text-xs font-bold leading-relaxed mb-10 uppercase tracking-widest">
               Your funds are held in a secure vault. The professional is only paid when you click the release button.
             </p>
