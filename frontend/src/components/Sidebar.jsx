@@ -60,12 +60,14 @@ export default function Sidebar({ role, closeMobileMenu }) {
       { label: "My Projects", path: "/client/jobs", icon: Briefcase },
       { 
         label: "Manage Work", 
-        path: latestJobId ? `/client/manage-work/${latestJobId}` : "/client/manage-work", 
+        // ✅ FALLBACK: If no ID exists, don't break the link
+        path: latestJobId ? `/client/manage-work/${latestJobId}` : "/client/jobs", 
         icon: Zap 
       },
       { 
         label: "Applications", 
-        path: latestJobId ? `/client/applications/${latestJobId}` : "/client/applications", 
+        // ✅ FALLBACK: Direct to general applications if no specific job is selected
+        path: latestJobId ? `/client/applications/${latestJobId}` : "/client/client/applications", 
         icon: Layers 
       },
       { label: "Saved Talent", path: "/client/remember-talent", icon: Star },
