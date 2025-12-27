@@ -161,23 +161,10 @@ function App() {
               <Route path="/notification" element={<NotificationPage />} />
 
               {/* ✅ FIXED: Parameterized Applications route */}
-              <Route
-                path="/client/applications"
-                element={<JobApplications />}
-              />
-              <Route
-                path="/client/applications/:jobId"
-                element={<JobApplications />}
-              />
-
-              <Route
-                path="/client/remember-talent"
-                element={<RememberTalent />}
-              />
-              <Route
-                path="/client/discover-student"
-                element={<DiscoverStudent />}
-              />
+              <Route  path="/client/applications"  element={<JobApplications />}/>
+              <Route  path="/client/applications/:jobId" element={<JobApplications />}/>
+              <Route path="/client/remember-talent" element={<RememberTalent />}/>
+              <Route path="/client/discover-student" element={<DiscoverStudent />}/>
             </Route>
           </Route>
 
