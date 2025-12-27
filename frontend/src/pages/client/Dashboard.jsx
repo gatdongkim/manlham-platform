@@ -21,11 +21,13 @@ export default function ClientDashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // ✅ Fix: Fetch the main jobs list (The only route currently working in your backend)
+        // ✅ STEP 1: Fetch from the verified backend route
         const jobsRes = await API.get('/jobs');
-        const jobsList = jobsRes.data?.data || jobsRes.data || [];
         
-        // Filter jobs for Gatdong Kim (using the ID from your backend route)
+        // Aligning with your jobRoutes.js structure: { success: true, data: [...] }
+        const jobsList = jobsRes.data?.data || [];
+        
+        // ✅ STEP 2: Filter for Gatdong Kim's projects
         const myJobs = jobsList.filter(job => 
           job.client?._id === "658af1234567890abcdef123" || 
           job.client === "658af1234567890abcdef123"
@@ -33,17 +35,17 @@ export default function ClientDashboard() {
 
         setRecentJobs(myJobs.slice(0, 5));
 
-        // ✅ Manual Stat Calculation: This bypasses the broken /client-stats endpoint
-        // This clears the "API Error (400)" from your sidebar
+        // ✅ STEP 3: Manually calculate stats to clear the API Error (400)
+        // This ensures the dashboard doesn't rely on a non-existent stats endpoint
         setStats({
-          activeJobs: myJobs.filter(j => j.status === 'OPEN' || j.status === 'active').length,
-          pendingBids: 0, // Placeholder until Bids logic is added
+          activeJobs: myJobs.filter(j => j.status === 'OPEN' || j.status === 'active' || !j.status).length,
+          pendingBids: 0, 
           completedJobs: myJobs.filter(j => j.status === 'COMPLETED').length,
           totalSpent: myJobs.reduce((sum, j) => sum + (Number(j.budget) || 0), 0)
         });
         
       } catch (err) {
-        console.error("Dashboard fetch error:", err);
+        console.error("Dashboard synchronization error:", err);
       } finally {
         setLoading(false);
       }
@@ -88,10 +90,10 @@ export default function ClientDashboard() {
         </Link>
       </header>
 
-      {/* Stats Grid */}
+      {/* Stats Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {statCards.map((stat) => (
-          <div key={stat.label} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
+          <div key={stat.label} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
             <div className={`${stat.bg} ${stat.color} w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
               <stat.icon size={24} strokeWidth={2.5} />
             </div>
@@ -144,7 +146,7 @@ export default function ClientDashboard() {
           </div>
         </div>
 
-        {/* Sidebar Info */}
+        {/* Sidebar Info Section */}
         <div className="lg:col-span-4 space-y-8">
           <div className="bg-gray-900 p-10 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden group">
             <h3 className="font-black text-xl italic tracking-tight mb-4 uppercase">Escrow Protocol<span className="text-indigo-500">.</span></h3>
