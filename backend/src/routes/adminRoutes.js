@@ -1,10 +1,32 @@
 import express from 'express';
+import { 
+    users, 
+    getStats, 
+    getVerificationQueue, 
+    getAllDisputes 
+} from '../apps/admin_panel/admin.controller.js'; // Ensure path is correct
 import Application from '../apps/applications/application.model.js';
 import Job from '../apps/jobs/job.model.js';
 
 const router = express.Router();
 
-// GET /api/v1/admin/applications
+/**
+ * ✅ IDENTITY PAGE FIX
+ * This handles GET /api/v1/admin/users
+ */
+router.get('/users', users);
+
+/**
+ * ✅ CONTROL PANEL STATS FIX
+ * This handles GET /api/v1/admin/stats
+ */
+router.get('/stats', getStats);
+
+// Vetting & Disputes
+router.get('/verification-queue', getVerificationQueue);
+router.get('/disputes', getAllDisputes);
+
+// Existing Application Routes
 router.get('/applications', async (req, res) => {
     try {
         const applications = await Application.find()
@@ -16,7 +38,6 @@ router.get('/applications', async (req, res) => {
     }
 });
 
-// PATCH /api/v1/admin/applications/:id
 router.patch('/applications/:id', async (req, res) => {
     const { status } = req.body;
     try {
