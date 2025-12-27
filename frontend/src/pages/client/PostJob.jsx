@@ -11,8 +11,7 @@ export default function PostJob() {
     currency: "SSP", 
     category: "Software Development",
     deadline: "",
-    location: "Remote",
-    skills: [] 
+    location: "Remote"
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -21,36 +20,22 @@ export default function PostJob() {
     e.preventDefault();
     setLoading(true);
 
-    // ✅ Fix 1: Ensure budget is a Number to avoid 400 validation errors
+    // ✅ Formatting the payload to satisfy the backend schema
     const payload = {
       ...formData,
-      budget: Number(formData.budget),
-      skills: ["General Support", formData.category], // Default array to satisfy schema
+      budget: Number(formData.budget), // Required for the Business Hub stats
+      skills: ["General Support", formData.category] // Fills the required array
     };
 
     try {
-      // ✅ Fix 2: Redirecting to the verified Client route (/jobs/client)
-      // Your logs show /jobs/client-stats works, so the base is likely /jobs/client
-      const response = await API.post("/jobs/client", payload);
+      // ✅ Hits the router.post('/') in your jobRoutes.js
+      await API.post("/jobs", payload);
       
-      console.log("Success:", response.data);
+      // Navigate to dashboard where the 400 Sync Error will now be cleared
       navigate("/client/dashboard");
-
     } catch (error) {
-      console.error("DEBUG:", error.response?.data);
-      
-      // ✅ Fix 3: Automatic fallback if the route is /client/jobs instead of /jobs/client
-      if (error.response?.status === 404) {
-        try {
-          await API.post("/client/jobs", payload);
-          navigate("/client/dashboard");
-        } catch (retryError) {
-          alert("CRITICAL 404: The server cannot find the post route. Please check backend router.js for the exact POST path.");
-        }
-      } else {
-        const serverMsg = error.response?.data?.message || "Check all required fields";
-        alert(`Post Failed: ${serverMsg}`);
-      }
+      console.error("Post Error Details:", error.response?.data);
+      alert(error.response?.data?.message || "Failed to post. Check backend logs.");
     } finally {
       setLoading(false);
     }
@@ -76,6 +61,7 @@ export default function PostJob() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 md:p-10 rounded-[3rem] border border-gray-100 shadow-2xl shadow-indigo-100/20 space-y-8">
+        {/* Project Title */}
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Project Title</label>
           <div className="relative">
@@ -89,6 +75,7 @@ export default function PostJob() {
           </div>
         </div>
 
+        {/* Category & Model */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Expertise Category</label>
@@ -126,6 +113,7 @@ export default function PostJob() {
           </div>
         </div>
 
+        {/* Budget & Deadline */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Budget Allocation</label>
@@ -163,6 +151,7 @@ export default function PostJob() {
           </div>
         </div>
 
+        {/* Description */}
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Description & Deliverables</label>
           <div className="relative">
@@ -176,6 +165,7 @@ export default function PostJob() {
           </div>
         </div>
 
+        {/* Submit */}
         <button 
           type="submit" disabled={loading}
           className="w-full bg-gray-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all shadow-xl shadow-gray-200 active:scale-95 disabled:opacity-50 group"
