@@ -11,7 +11,8 @@ export default function PostJob() {
     currency: "SSP", 
     category: "Software Development",
     deadline: "",
-    location: "Remote"
+    location: "Remote",
+    skills: [] // ✅ Added to satisfy potential backend schema requirements
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -20,17 +21,23 @@ export default function PostJob() {
     e.preventDefault();
     setLoading(true);
     try {
-      // ✅ Using /jobs matches your standard API structure
-      await API.post("/jobs", formData);
+      // ✅ Step 1: Format payload strictly (convert budget to Number)
+      const payload = {
+        ...formData,
+        budget: Number(formData.budget),
+        skills: ["General"] // Provide a default if the backend requires an array
+      };
+
+      // ✅ Step 2: Use the plural endpoint that matches your verified API structure
+      // Your log shows /jobs/client-stats exists, suggesting /jobs is the base
+      await API.post("/jobs", payload);
       
-      // ✅ Success feedback could go here (e.g., a toast notification)
-      
-      // Redirect to dashboard where our new fetch logic will pick up this job
       navigate("/client/dashboard");
     } catch (error) {
-      console.error("Error posting job:", error);
-      // ✅ More descriptive error message
-      alert(error.response?.data?.message || "Failed to post job. Please check your connection.");
+      console.error("FULL SERVER ERROR:", error.response?.data);
+      // ✅ Improved error alerting to see the specific field causing the 400/404
+      const errorMessage = error.response?.data?.message || "Check network tab for details";
+      alert(`Failed to post job: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -56,7 +63,6 @@ export default function PostJob() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 md:p-10 rounded-[3rem] border border-gray-100 shadow-2xl shadow-indigo-100/20 space-y-8">
-        {/* Project Title */}
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Project Title</label>
           <div className="relative">
@@ -70,7 +76,6 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* Category & Model */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Expertise Category</label>
@@ -108,7 +113,6 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* Budget & Deadline */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Budget Allocation</label>
@@ -146,24 +150,22 @@ export default function PostJob() {
           </div>
         </div>
 
-        {/* Description */}
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Description & Deliverables</label>
           <div className="relative">
             <FileText className="absolute left-5 top-6 text-gray-400" size={20} />
             <textarea 
               required rows="6"
-              placeholder="Describe exactly what needs to be done. List milestones to ensure clear expectations with students..."
+              placeholder="Describe exactly what needs to be done..."
               className="w-full pl-14 pr-6 py-6 bg-gray-50 border-none rounded-[2rem] font-medium text-sm outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all resize-none shadow-inner"
               onChange={(e) => setFormData({...formData, description: e.target.value})}
             />
           </div>
         </div>
 
-        {/* Submit */}
         <button 
           type="submit" disabled={loading}
-          className="w-full bg-gray-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all shadow-xl shadow-gray-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group"
+          className="w-full bg-gray-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all shadow-xl shadow-gray-200 active:scale-95 disabled:opacity-50 group"
         >
           {loading ? (
             <Loader2 className="animate-spin" />
