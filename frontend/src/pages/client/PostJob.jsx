@@ -12,7 +12,7 @@ export default function PostJob() {
     category: "Software Development",
     deadline: "",
     location: "Remote",
-    skills: [] // ✅ Added to satisfy potential backend schema requirements
+    skills: [] 
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -20,24 +20,38 @@ export default function PostJob() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    try {
-      // ✅ Step 1: Format payload strictly (convert budget to Number)
-      const payload = {
-        ...formData,
-        budget: Number(formData.budget),
-        skills: ["General"] // Provide a default if the backend requires an array
-      };
 
-      // ✅ Step 2: Use the plural endpoint that matches your verified API structure
-      // Your log shows /jobs/client-stats exists, suggesting /jobs is the base
-      await API.post("/jobs", payload);
+    // ✅ Step 1: Strict Payload Formatting
+    const payload = {
+      ...formData,
+      budget: Number(formData.budget), // Ensure Number type for backend validation
+      skills: ["General Support", formData.category], // Default skills array to satisfy schema
+    };
+
+    try {
+      console.log("DEBUG: Posting to /jobs with payload:", payload);
       
+      // ✅ Step 2: Try standard endpoint first
+      // If your backend specifically uses /jobs/client for posts, update this string
+      const response = await API.post("/jobs", payload);
+      
+      console.log("DEBUG: Post Success:", response.data);
       navigate("/client/dashboard");
+
     } catch (error) {
-      console.error("FULL SERVER ERROR:", error.response?.data);
-      // ✅ Improved error alerting to see the specific field causing the 400/404
-      const errorMessage = error.response?.data?.message || "Check network tab for details";
-      alert(`Failed to post job: ${errorMessage}`);
+      console.error("DEBUG: Full Error Object:", error.response?.data);
+      
+      // ✅ Step 3: Deep Diagnostic Alerts
+      const serverMsg = error.response?.data?.message || error.response?.data?.error || "Unknown Error";
+      const status = error.response?.status;
+
+      if (status === 404) {
+        alert("CRITICAL: The endpoint '/jobs' was not found (404). Please verify your backend router path.");
+      } else if (status === 400) {
+        alert(`VALIDATION ERROR (400): ${serverMsg}. Check if all required fields are filled correctly.`);
+      } else {
+        alert(`POST FAILED: ${serverMsg}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -63,6 +77,7 @@ export default function PostJob() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 md:p-10 rounded-[3rem] border border-gray-100 shadow-2xl shadow-indigo-100/20 space-y-8">
+        {/* Project Title */}
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Project Title</label>
           <div className="relative">
@@ -76,6 +91,7 @@ export default function PostJob() {
           </div>
         </div>
 
+        {/* Category & Model */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Expertise Category</label>
@@ -113,6 +129,7 @@ export default function PostJob() {
           </div>
         </div>
 
+        {/* Budget & Deadline */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Budget Allocation</label>
@@ -150,6 +167,7 @@ export default function PostJob() {
           </div>
         </div>
 
+        {/* Description */}
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Description & Deliverables</label>
           <div className="relative">
@@ -163,6 +181,7 @@ export default function PostJob() {
           </div>
         </div>
 
+        {/* Submit */}
         <button 
           type="submit" disabled={loading}
           className="w-full bg-gray-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs flex items-center justify-center gap-3 hover:bg-indigo-600 transition-all shadow-xl shadow-gray-200 active:scale-95 disabled:opacity-50 group"
