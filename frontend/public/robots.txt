@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://manlham-tech.vercel.app/sitemap.xml
