@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+// --- 0. IMPORT GOOGLE OAUTH PROVIDER ---
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./components/DashboardLayout";
@@ -86,147 +88,152 @@ const ScrollToTop = () => {
 };
 
 function App() {
+  // YOUR GOOGLE CLIENT ID
+  const GOOGLE_CLIENT_ID = "15228028717-idpobi15jqact7hudd0f8behb4jfa9r9.apps.googleusercontent.com";
+
   return (
-    <AuthProvider>
-      <BrowserRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-      >
-        <ScrollToTop />
-        <Routes>
-          {/* --- Public Routes --- */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<RegisterType />} />
-          <Route path="/signup-student" element={<SignupStudent />} />
-          <Route path="/signup-client" element={<SignupClient />} />
-          <Route path="/signup-staff" element={<SignupStaff />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/marketplace" element={<JobMarketplace />} />
-          <Route path="/success-stories" element={<SuccessStories />} />
-          <Route path="/contact" element={<ContactUs />} />
-          <Route path="/vetting" element={<VettingProcess />} />
-          <Route path="/disputes" element={<DisputeResolution />} />
-          <Route path="/safety" element={<SafetyTrust />} />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
+          <ScrollToTop />
+          <Routes>
+            {/* --- Public Routes --- */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<RegisterType />} />
+            <Route path="/signup-student" element={<SignupStudent />} />
+            <Route path="/signup-client" element={<SignupClient />} />
+            <Route path="/signup-staff" element={<SignupStaff />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/marketplace" element={<JobMarketplace />} />
+            <Route path="/success-stories" element={<SuccessStories />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/vetting" element={<VettingProcess />} />
+            <Route path="/disputes" element={<DisputeResolution />} />
+            <Route path="/safety" element={<SafetyTrust />} />
 
-          {/* ✅ FIXED AUTH FLOW ROUTES */}
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
+            {/* ✅ FIXED AUTH FLOW ROUTES */}
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
-          {/* ✅ FIXED LEGAL PATHS */}
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/help" element={<HelpCenter />} />
+            {/* ✅ FIXED LEGAL PATHS */}
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/help" element={<HelpCenter />} />
 
-          {/* --- Student (PRO) Protected Routes --- */}
-          <Route element={<ProtectedRoute allowedRoles={["PRO"]} />}>
-            <Route element={<DashboardLayout />}>
-              <Route
-                path="/students/dashboard"
-                element={<StudentDashboard />}
-              />
-              <Route
-                path="/students/applications"
-                element={<StudentApplications />}
-              />
-              <Route path="/students/chats" element={<StudentChats />} />
-              <Route path="/students/wallet" element={<Wallet />} />
-              <Route path="/notification" element={<NotificationPage />} />
-              <Route path="/marketplace" element={<JobMarketplace />} />
-              <Route path="/jobs/:id" element={<JobDetail />} />
-              <Route
-                path="/students/profile-setup"
-                element={<ProfileSetup />}
-              />
+            {/* --- Student (PRO) Protected Routes --- */}
+            <Route element={<ProtectedRoute allowedRoles={["PRO"]} />}>
+              <Route element={<DashboardLayout />}>
+                <Route
+                  path="/students/dashboard"
+                  element={<StudentDashboard />}
+                />
+                <Route
+                  path="/students/applications"
+                  element={<StudentApplications />}
+                />
+                <Route path="/students/chats" element={<StudentChats />} />
+                <Route path="/students/wallet" element={<Wallet />} />
+                <Route path="/notification" element={<NotificationPage />} />
+                <Route path="/marketplace" element={<JobMarketplace />} />
+                <Route path="/jobs/:id" element={<JobDetail />} />
+                <Route
+                  path="/students/profile-setup"
+                  element={<ProfileSetup />}
+                />
+              </Route>
             </Route>
-          </Route>
 
-          {/* --- MSME (Client) Protected Routes --- */}
-          <Route element={<ProtectedRoute allowedRoles={["MSME"]} />}>
-            <Route element={<DashboardLayout />}>
-              <Route path="/client/dashboard" element={<ClientDashboard />} />
-              <Route path="/client/post-job" element={<PostJob />} />
-              <Route path="/client/jobs" element={<MyJobs />} />
+            {/* --- MSME (Client) Protected Routes --- */}
+            <Route element={<ProtectedRoute allowedRoles={["MSME"]} />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/client/dashboard" element={<ClientDashboard />} />
+                <Route path="/client/post-job" element={<PostJob />} />
+                <Route path="/client/jobs" element={<MyJobs />} />
 
-              {/* ✅ FIXED: Added dynamic jobId support to prevent 404s */}
-              <Route path="/client/manage-work" element={<ManageWork />} />
-              <Route
-                path="/client/manage-work/:jobId"
-                element={<ManageWork />}
-              />
+                {/* ✅ FIXED: Added dynamic jobId support to prevent 404s */}
+                <Route path="/client/manage-work" element={<ManageWork />} />
+                <Route
+                  path="/client/manage-work/:jobId"
+                  element={<ManageWork />}
+                />
 
-              <Route path="/client/payments" element={<ClientPayments />} />
-              <Route path="/client/support" element={<ClientSupport />} />
-              <Route path="/client/chats" element={<ClientChat />} />
-              <Route path="/notification" element={<NotificationPage />} />
+                <Route path="/client/payments" element={<ClientPayments />} />
+                <Route path="/client/support" element={<ClientSupport />} />
+                <Route path="/client/chats" element={<ClientChat />} />
+                <Route path="/notification" element={<NotificationPage />} />
 
-              {/* ✅ FIXED: Parameterized Applications route */}
-              <Route  path="/client/applications"  element={<JobApplications />}/>
-              <Route  path="/client/applications/:jobId" element={<JobApplications />}/>
-              <Route path="/client/remember-talent" element={<RememberTalent />}/>
-              <Route path="/client/discover-student" element={<DiscoverStudent />}/>
+                {/* ✅ FIXED: Parameterized Applications route */}
+                <Route  path="/client/applications"  element={<JobApplications />}/>
+                <Route  path="/client/applications/:jobId" element={<JobApplications />}/>
+                <Route path="/client/remember-talent" element={<RememberTalent />}/>
+                <Route path="/client/discover-student" element={<DiscoverStudent />}/>
+              </Route>
             </Route>
-          </Route>
 
-          {/* --- Staff Protected Routes --- */}
-          <Route element={<ProtectedRoute allowedRoles={["STAFF"]} />}>
-            <Route element={<DashboardLayout />}>
-              <Route path="/staff/dashboard" element={<StaffDashboard />} />
-              <Route path="/staff/meetings" element={<StaffMeetings />} />
-              <Route path="/staff/support" element={<StaffSupport />} />
-              <Route path="/staff/users" element={<StaffUsers />} />
-              <Route
-                path="/staff/verification"
-                element={<StaffVerification />}
-              />
-              <Route path="/staff/disputes" element={<DisputePanel />} />
-              <Route path="/staff/analytics" element={<FinancialAnalytics />} />
-              <Route path="/staff/reviews" element={<StaffReview />} />
+            {/* --- Staff Protected Routes --- */}
+            <Route element={<ProtectedRoute allowedRoles={["STAFF"]} />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/staff/dashboard" element={<StaffDashboard />} />
+                <Route path="/staff/meetings" element={<StaffMeetings />} />
+                <Route path="/staff/support" element={<StaffSupport />} />
+                <Route path="/staff/users" element={<StaffUsers />} />
+                <Route
+                  path="/staff/verification"
+                  element={<StaffVerification />}
+                />
+                <Route path="/staff/disputes" element={<DisputePanel />} />
+                <Route path="/staff/analytics" element={<FinancialAnalytics />} />
+                <Route path="/staff/reviews" element={<StaffReview />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* --- Admin Protected Routes --- */}
-          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-            <Route element={<DashboardLayout />}>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route
-                path="/admin/verification"
-                element={<VerificationQueue />}
-              />
-              <Route path="/admin/disputes" element={<AdminDisputes />} />
+            {/* --- Admin Protected Routes --- */}
+            <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route element={<DashboardLayout />}>
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                <Route
+                  path="/admin/verification"
+                  element={<VerificationQueue />}
+                />
+                <Route path="/admin/disputes" element={<AdminDisputes />} />
 
-              {/* ✅ FIXED: Matches your "Staff Requests" sidebar link */}
-              <Route path="/admin/staff-review" element={<StaffActivity />} />
+                {/* ✅ FIXED: Matches your "Staff Requests" sidebar link */}
+                <Route path="/admin/staff-review" element={<StaffActivity />} />
 
-              {/* ✅ FIXED: Matches your "Audit Logs" sidebar link */}
-              <Route path="/admin/audit" element={<AuditLogs />} />
+                {/* ✅ FIXED: Matches your "Audit Logs" sidebar link */}
+                <Route path="/admin/audit" element={<AuditLogs />} />
 
-              <Route
-                path="/admin/applications"
-                element={<ApplicationsManager />}
-              />
-              <Route path="/admin/support" element={<AdminSupport />} />
-              <Route path="/admin/payments" element={<AdminPayments />} />
-              <Route path="/admin/users" element={<AdminUsers />} />
+                <Route
+                  path="/admin/applications"
+                  element={<ApplicationsManager />}
+                />
+                <Route path="/admin/support" element={<AdminSupport />} />
+                <Route path="/admin/payments" element={<AdminPayments />} />
+                <Route path="/admin/users" element={<AdminUsers />} />
 
-              {/* ✅ FIXED: Matches your "Post Manager" sidebar link */}
-              <Route path="/admin/post" element={<AdminPost />} />
+                {/* ✅ FIXED: Matches your "Post Manager" sidebar link */}
+                <Route path="/admin/post" element={<AdminPost />} />
 
-              <Route path="/admin/analytics" element={<ClientAnalytics />} />
-              <Route path="/admin/revenue" element={<RevenueSettings />} />
-              <Route
-                path="/admin/withdrawals"
-                element={<WithdrawalRequests />}
-              />
-              <Route path="/notification" element={<NotificationPage />} />
+                <Route path="/admin/analytics" element={<ClientAnalytics />} />
+                <Route path="/admin/revenue" element={<RevenueSettings />} />
+                <Route
+                  path="/admin/withdrawals"
+                  element={<WithdrawalRequests />}
+                />
+                <Route path="/notification" element={<NotificationPage />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="/unauthorized" element={<UnauthorizedUI />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            <Route path="/unauthorized" element={<UnauthorizedUI />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

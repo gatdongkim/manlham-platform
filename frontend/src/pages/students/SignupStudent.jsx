@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { GraduationCap, Mail, Plus, X, ArrowRight } from "lucide-react";
+import { Mail, Plus, X, ArrowRight } from "lucide-react";
 import BackButton from "../../components/BackButton";
 import api from "../../api/http";
 
@@ -76,7 +76,7 @@ export default function SignupStudent() {
       setError(err.response?.data?.message || "Connection refused. Is the backend running?");
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
-      setLoading(false); // ✅ Fixes the "Registering..." hang
+      setLoading(false);
     }
   };
 
@@ -104,9 +104,22 @@ export default function SignupStudent() {
       <div className="w-full max-w-xl">
         <div className="mb-8"><BackButton text="Back to Selection" to="/register" /></div>
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-8 md:p-12">
+          
+          {/* --- HEADER UPDATED WITH LOGO --- */}
           <header className="text-center mb-10">
-            <div className="inline-flex w-14 h-14 bg-indigo-600 text-white rounded-2xl items-center justify-center mb-4 shadow-lg"><GraduationCap size={28} /></div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight italic">Student Account<span className="text-indigo-600">.</span></h1>
+            <div className="inline-flex mb-6">
+              <img 
+                src="/logo.png" 
+                alt="Manlham Tech Logo" 
+                className="w-20 h-20 object-contain" 
+              />
+            </div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight italic uppercase">
+              Student Account<span className="text-indigo-600">.</span>
+            </h1>
+            <p className="text-[10px] text-gray-400 font-black tracking-[0.2em] uppercase mt-2">
+              Join the professional marketplace
+            </p>
           </header>
 
           {error && (

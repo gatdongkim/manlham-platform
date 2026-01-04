@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Building2, ChevronRight, ShieldCheck, AlertCircle } from "lucide-react";
+import { ChevronRight, ShieldCheck, AlertCircle } from "lucide-react";
 import BackButton from "../../components/BackButton";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -31,45 +31,31 @@ export default function SignupClient() {
     e.preventDefault();
     setError(""); 
 
-    // 1. Basic Validation
     if (!form.agree) return setError("Please agree to the terms.");
     if (form.password !== form.confirmPassword) return setError("Passwords do not match.");
     if (form.password.length < 8) return setError("Password must be at least 8 characters.");
 
     setLoading(true);
     try {
-      // 2. Prepare data exactly as backend auth.controller.js expects
       const signupData = {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         password: form.password,
-        role: "MSME", // This maps to MSME in your backend enum
-        clientType: form.clientType, // Already uppercased by select options
+        role: "MSME", 
+        clientType: form.clientType, 
         location: form.location.trim(),
         phone: form.phone.trim()
       };
 
-      console.log("🚀 Sending Request to Backend:", signupData);
+      await register(signupData);
 
-      // 3. AWAIT the register call from AuthContext
-      // This is the line that connects to your http.js/Axios instance
-      const response = await register(signupData);
-
-      // 4. Handle Success
-      console.log("✅ Backend Response:", response);
-      
-      // Navigate only after successful response
       navigate("/login", { 
         state: { successMessage: "Account created successfully! You can now log in." } 
       });
 
     } catch (err) {
-      console.error("❌ Signup Component Caught Error:", err);
-      
-      // Extract the error message sent by your backend res.status(400).json({message: ...})
       const errorMessage = err.response?.data?.message || err.message || "Registration failed.";
       setError(errorMessage);
-      
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
@@ -82,9 +68,15 @@ export default function SignupClient() {
         <div className="mb-8"><BackButton text="Back to Selection" to="/register" /></div>
         
         <div className="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-8 md:p-12">
+          
+          {/* --- HEADER UPDATED WITH LOGO --- */}
           <header className="text-center mb-10">
-            <div className="inline-flex w-14 h-14 bg-indigo-600 text-white rounded-2xl items-center justify-center mb-4 shadow-lg shadow-indigo-100">
-              <Building2 size={28} />
+            <div className="inline-flex mb-6">
+              <img 
+                src="/logo.png" 
+                alt="Manlham Tech Logo" 
+                className="w-20 h-20 object-contain" 
+              />
             </div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight italic uppercase">
               Hire Talent<span className="text-indigo-600">.</span>
@@ -95,9 +87,8 @@ export default function SignupClient() {
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Error Feedback */}
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 text-center flex items-center justify-center gap-2 animate-bounce">
+              <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 text-center flex items-center justify-center gap-2">
                 <AlertCircle size={14} /> {error}
               </div>
             )}
