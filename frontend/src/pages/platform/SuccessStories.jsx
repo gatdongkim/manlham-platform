@@ -12,7 +12,7 @@ const stories = [
     region: "South Sudan",
     category: "Graphic Design",
     payout: "55,000 SSP",
-    content: "Through Nexus, I found a student who rebranded our entire fleet in 48 hours. The escrow system gave us total peace of mind.",
+    content: "Through Manlham Tech Support, I found a student who rebranded our entire fleet in 48 hours. The escrow system gave us total peace of mind.",
     image: "https://images.unsplash.com/photo-1541462608141-ad4d157ee78a?auto=format&fit=crop&q=80&w=200"
   },
   {
